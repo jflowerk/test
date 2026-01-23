@@ -10,12 +10,12 @@ function Core:OnInitialize()
 end
 
 function Core:OnEnable()
-  print("[HiphamAlert] OnEnable called - Addon is loading")
+  -- print("[HiphamAlert] OnEnable called - Addon is loading")
   Core:setupConfigs()
   Core:updateMinimapIcon()
   Core:RegisterEvent("PLAYER_ENTERING_WORLD")
   Core:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-  print("[HiphamAlert] UNIT_SPELLCAST_SUCCEEDED registered")
+  -- print("[HiphamAlert] UNIT_SPELLCAST_SUCCEEDED registered")
   C_ChatInfo.RegisterAddonMessagePrefix("HiphamAlert")
 end
 
@@ -34,9 +34,9 @@ end
 
 function Core:UNIT_SPELLCAST_SUCCEEDED(event, unitTarget, castGUID, spellId)
   -- 디버그 출력
-  print("[HiphamAlert DEBUG] UNIT_SPELLCAST_SUCCEEDED called")
-  print("[HiphamAlert DEBUG] unitTarget:", unitTarget)
-  print("[HiphamAlert DEBUG] spellId:", spellId)
+  -- print("[HiphamAlert DEBUG] UNIT_SPELLCAST_SUCCEEDED called")
+  -- print("[HiphamAlert DEBUG] unitTarget:", unitTarget)
+  -- print("[HiphamAlert DEBUG] spellId:", spellId)
 
   -- 플레이어 또는 펫의 스킬만 처리
   if unitTarget ~= "player" and unitTarget ~= "pet" then
@@ -85,7 +85,7 @@ function Core:processSpellCastForVoiceAlert(spellId)
   end
 
   if voicePath then
-    print("[HiphamAlert DEBUG] Playing sound:", voicePath)
+    -- print("[HiphamAlert DEBUG] Playing sound:", voicePath)
     Core:playSpellSound(voicePath)
   end
 end
