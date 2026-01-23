@@ -34,6 +34,15 @@ function Core:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
   local timestamp, eventType, hideCaster, sourceGUID, sourceName, sourceFlags, sourceFlags2, destGUID, destName,
   destFlags, destFlags2, spellId, spellName, spellSchool, auraType = CombatLogGetCurrentEventInfo()
 
+  -- 디버그: 이벤트가 감지되는지 확인
+  Core.Utils.debugPrint("=== COMBAT LOG EVENT ===")
+  Core.Utils.debugPrint("eventType:", eventType)
+  Core.Utils.debugPrint("spellId:", spellId)
+  Core.Utils.debugPrint("spellName:", spellName)
+  Core.Utils.debugPrint("sourceGUID:", sourceGUID)
+  Core.Utils.debugPrint("playerGUID:", UnitGUID("player"))
+  Core.Utils.debugPrint("Match:", sourceGUID == UnitGUID("player"))
+
   if sourceGUID == UnitGUID("player") then
     Core.Utils.debugPrint("-------------------------------------------")
     Core.Utils.debugPrint(eventType, spellName, spellId)
