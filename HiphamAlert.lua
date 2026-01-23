@@ -10,10 +10,12 @@ function Core:OnInitialize()
 end
 
 function Core:OnEnable()
+  print("[HiphamAlert] OnEnable called - Addon is loading")
   Core:setupConfigs()
   Core:updateMinimapIcon()
   Core:RegisterEvent("PLAYER_ENTERING_WORLD")
-  Core:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+  Core:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+  print("[HiphamAlert] UNIT_SPELLCAST_SUCCEEDED registered")
   C_ChatInfo.RegisterAddonMessagePrefix("HiphamAlert")
 end
 
@@ -30,22 +32,62 @@ function Core:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
   Core:updateCurrentInstance()
 end
 
-function Core:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
-  local timestamp, eventType, hideCaster, sourceGUID, sourceName, sourceFlags, sourceFlags2, destGUID, destName,
-  destFlags, destFlags2, spellId, spellName, spellSchool, auraType = CombatLogGetCurrentEventInfo()
+function Core:UNIT_SPELLCAST_SUCCEEDED(event, unitTarget, castGUID, spellId)
+  -- 디버그 출력
+  print("[HiphamAlert DEBUG] UNIT_SPELLCAST_SUCCEEDED called")
+  print("[HiphamAlert DEBUG] unitTarget:", unitTarget)
+  print("[HiphamAlert DEBUG] spellId:", spellId)
 
-  if sourceGUID == UnitGUID("player") then
-    Core.Utils.debugPrint("-------------------------------------------")
-    Core.Utils.debugPrint(eventType, spellName, spellId)
-    local name, rank, icon, castTime, minRange, maxRange = C_Spell.GetSpellInfo(spellId)
-    Core.Utils.debugPrint(castTime)
-    local cooldownMS, gcdMS = GetSpellBaseCooldown(spellId)
-    Core.Utils.debugPrint(cooldownMS, gcdMS)
+  -- 플레이어 또는 펫의 스킬만 처리
+  if unitTarget ~= "player" and unitTarget ~= "pet" then
+    return
   end
 
-  Core:processCombatLogForVoiceAlert(eventType, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags,
-    spellId, spellName,
-    spellSchool)
+  Core.Utils.debugPrint("-------------------------------------------")
+  Core.Utils.debugPrint("Player spell cast succeeded:", spellId)
+
+  -- 스킬 정보 가져오기
+  local spellInfo = C_Spell.GetSpellInfo(spellId)
+  if spellInfo then
+    Core.Utils.debugPrint("Spell name:", spellInfo.name)
+  end
+
+  -- 음성 알림 처리
+  Core:processSpellCastForVoiceAlert(spellId)
+end
+
+function Core:processSpellCastForVoiceAlert(spellId)
+  -- 음성 알림 활성화 체크
+  if Core.DB.profile.voiceAlertEnabled == nil then return end
+  if Core.DB.profile.voiceAlertEnabled == false then return end
+
+  -- 현재 인스턴스 체크
+  local currentInstance = Core.State.currentInstance
+  if currentInstance == nil then return end
+
+  -- 인스턴스별 음성 알림 활성화 체크
+  if Core.DB.profile.voiceAlertEnabledByInstance[currentInstance.id] == nil then return end
+  if Core.DB.profile.voiceAlertEnabledByInstance[currentInstance.id] == false then return end
+
+  -- 주문별 음성 알림 활성화 체크
+  local spell = Core.DB.profile.spellDB[spellId]
+  if spell == nil then return end
+
+  local isEnabled = spell.enabled[currentInstance.id]
+  if isEnabled == nil then return end
+  if isEnabled == false then return end
+
+  -- SPELL_CAST_SUCCESS 이벤트에 매핑된 음성 찾기
+  local voicePath = spell.combatLogVoiceMap["SPELL_CAST_SUCCESS"]
+  if voicePath == nil then
+    -- SPELL_CAST_START도 시도
+    voicePath = spell.combatLogVoiceMap["SPELL_CAST_START"]
+  end
+
+  if voicePath then
+    print("[HiphamAlert DEBUG] Playing sound:", voicePath)
+    Core:playSpellSound(voicePath)
+  end
 end
 
 -- Public function
