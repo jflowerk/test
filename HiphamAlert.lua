@@ -10,10 +10,12 @@ function Core:OnInitialize()
 end
 
 function Core:OnEnable()
+  print("[HiphamAlert] OnEnable called - Addon is loading")
   Core:setupConfigs()
   Core:updateMinimapIcon()
   Core:RegisterEvent("PLAYER_ENTERING_WORLD")
   Core:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+  print("[HiphamAlert] COMBAT_LOG_EVENT_UNFILTERED registered")
   C_ChatInfo.RegisterAddonMessagePrefix("HiphamAlert")
 end
 
@@ -31,19 +33,19 @@ function Core:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
 end
 
 function Core:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
+  -- 무조건 출력되는 디버그 (debugMode 무관)
+  print("[HiphamAlert DEBUG] COMBAT_LOG_EVENT_UNFILTERED called")
+
   local timestamp, eventType, hideCaster, sourceGUID, sourceName, sourceFlags, sourceFlags2, destGUID, destName,
   destFlags, destFlags2, spellId, spellName, spellSchool, auraType = CombatLogGetCurrentEventInfo()
 
-  -- 디버그: 이벤트가 감지되는지 확인
-  Core.Utils.debugPrint("=== COMBAT LOG EVENT ===")
-  Core.Utils.debugPrint("eventType:", eventType)
-  Core.Utils.debugPrint("spellId:", spellId)
-  Core.Utils.debugPrint("spellName:", spellName)
-  Core.Utils.debugPrint("sourceGUID:", sourceGUID)
-  Core.Utils.debugPrint("playerGUID:", UnitGUID("player"))
-  Core.Utils.debugPrint("Match:", sourceGUID == UnitGUID("player"))
+  -- 기본 정보 항상 출력
+  print("[HiphamAlert DEBUG] eventType:", eventType)
+  print("[HiphamAlert DEBUG] spellId:", spellId)
+  print("[HiphamAlert DEBUG] spellName:", spellName)
 
   if sourceGUID == UnitGUID("player") then
+    print("[HiphamAlert DEBUG] Player spell detected!")
     Core.Utils.debugPrint("-------------------------------------------")
     Core.Utils.debugPrint(eventType, spellName, spellId)
     local spellInfo = C_Spell.GetSpellInfo(spellId)
