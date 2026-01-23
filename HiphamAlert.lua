@@ -10,12 +10,10 @@ function Core:OnInitialize()
 end
 
 function Core:OnEnable()
-  print("[HiphamAlert] OnEnable called - Addon is loading")
   Core:setupConfigs()
   Core:updateMinimapIcon()
   Core:RegisterEvent("PLAYER_ENTERING_WORLD")
   Core:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-  print("[HiphamAlert] UNIT_SPELLCAST_SUCCEEDED registered")
   C_ChatInfo.RegisterAddonMessagePrefix("HiphamAlert")
 end
 
@@ -33,23 +31,19 @@ function Core:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
 end
 
 function Core:UNIT_SPELLCAST_SUCCEEDED(event, unitTarget, castGUID, spellId)
-  -- 디버그 출력
-  print("[HiphamAlert DEBUG] UNIT_SPELLCAST_SUCCEEDED called")
-  print("[HiphamAlert DEBUG] unitTarget:", unitTarget)
-  print("[HiphamAlert DEBUG] spellId:", spellId)
-
   -- 플레이어 또는 펫의 스킬만 처리
   if unitTarget ~= "player" and unitTarget ~= "pet" then
     return
   end
 
-  Core.Utils.debugPrint("-------------------------------------------")
-  Core.Utils.debugPrint("Player spell cast succeeded:", spellId)
-
-  -- 스킬 정보 가져오기
-  local spellInfo = C_Spell.GetSpellInfo(spellId)
-  if spellInfo then
-    Core.Utils.debugPrint("Spell name:", spellInfo.name)
+  -- 디버그 모드일 때만 상세 정보 출력
+  if Core.DB.global.debugMode then
+    Core.Utils.debugPrint("-------------------------------------------")
+    Core.Utils.debugPrint("UNIT_SPELLCAST_SUCCEEDED - spellId:", spellId)
+    local spellInfo = C_Spell.GetSpellInfo(spellId)
+    if spellInfo then
+      Core.Utils.debugPrint("Spell name:", spellInfo.name)
+    end
   end
 
   -- 음성 알림 처리
@@ -85,7 +79,7 @@ function Core:processSpellCastForVoiceAlert(spellId)
   end
 
   if voicePath then
-    print("[HiphamAlert DEBUG] Playing sound:", voicePath)
+    Core.Utils.debugPrint("Playing sound:", voicePath)
     Core:playSpellSound(voicePath)
   end
 end
@@ -161,71 +155,6 @@ function Core:updateCurrentInstance()
     Core.State.currentInstance = Core.Schemas.instanceTypes.raid
   else
     Core.State.currentInstance = Core.Schemas.instanceTypes.none
-  end
-end
-
-function Core:processCombatLogForVoiceAlert(eventType, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags,
-                                            spellId, spellName, spellSchool)
-  -- 음성 알림 활성화 체크
-  if Core.DB.profile.voiceAlertEnabled == nil then return end
-  if Core.DB.profile.voiceAlertEnabled == false then return end
-  -- print("음성 알림 활성화 체크 완료")
-
-  -- 현재 인스턴스 체크
-  local currentInstance = Core.State.currentInstance
-  if currentInstance == nil then return end
-  -- print("현재 인스턴스 체크 완료")
-
-  -- 인스턴스별 음성 알림 활성화 체크
-  if Core.DB.profile.voiceAlertEnabledByInstance[currentInstance.id] == nil then return end
-  if Core.DB.profile.voiceAlertEnabledByInstance[currentInstance.id] == false then return end
-  -- print("인스턴스별 음성 알림 활성화 체크 완료")
-
-  -- 주문별 음성 알림 활성화 체크
-  local spell = Core.DB.profile.spellDB[spellId]
-  if spell == nil then return end
-
-  local isEnabled = spell.enabled[currentInstance.id]
-  if isEnabled == nil then return end
-  if isEnabled == false then return end
-
-  local combatLogVoiceMap = spell.combatLogVoiceMap[eventType]
-  if combatLogVoiceMap == nil then return end
-  -- print("주문별 음성 알림 활성화 체크 완료")
-
-  -- 대상별 음성 알림 활성화 체크
-  if Core.DB.profile.voiceAlertEnabledByTarget[currentInstance.id].mine then
-    if CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_ME) or
-        CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_MINE) or
-        CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_MY_PET) then
-      Core:playSpellSound(combatLogVoiceMap)
-      return
-    end
-  end
-  if Core.DB.profile.voiceAlertEnabledByTarget[currentInstance.id].alliesUnit then
-    if CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_FRIENDLY_UNITS) then
-      Core:playSpellSound(combatLogVoiceMap)
-      return
-    end
-  end
-  if Core.DB.profile.voiceAlertEnabledByTarget[currentInstance.id].enemyUnit then
-    if CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_HOSTILE_PLAYERS) or
-        CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_HOSTILE_UNITS) then
-      Core:playSpellSound(combatLogVoiceMap)
-      return
-    end
-  end
-  if Core.DB.profile.voiceAlertEnabledByTarget[currentInstance.id].targetUnit then
-    if CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_HOSTILE_PLAYERS) or
-        CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_HOSTILE_UNITS) then
-      local targetUnit = UnitGUID("target")
-      if targetUnit ~= nil then
-        if sourceGUID == targetUnit then
-          Core:playSpellSound(combatLogVoiceMap)
-          return
-        end
-      end
-    end
   end
 end
 

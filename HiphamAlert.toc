@@ -1,5 +1,5 @@
 ## Interface: 120000
-## Version: 3.2.0
+## Version: 3.3.0
 ## Title: HiphamAlert
 ## Notes: HiphamAlert Combat Alert Addon
 ## Author: 니브다요-아즈샤라(제작), 힙햄-아즈샤라(음성)
