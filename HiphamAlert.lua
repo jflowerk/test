@@ -37,8 +37,10 @@ function Core:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
   if sourceGUID == UnitGUID("player") then
     Core.Utils.debugPrint("-------------------------------------------")
     Core.Utils.debugPrint(eventType, spellName, spellId)
-    local name, rank, icon, castTime, minRange, maxRange = C_Spell.GetSpellInfo(spellId)
-    Core.Utils.debugPrint(castTime)
+    local spellInfo = C_Spell.GetSpellInfo(spellId)
+    if spellInfo then
+      Core.Utils.debugPrint(spellInfo.castTime)
+    end
     local cooldownMS, gcdMS = GetSpellBaseCooldown(spellId)
     Core.Utils.debugPrint(cooldownMS, gcdMS)
   end
