@@ -27,7 +27,7 @@ Core.DefaultDB = {
       pvp = false,
       arena = true,
       party = true,
-      raid = false
+      raid = true
     },
     voiceAlertEnabledByTarget = {
       none = {
